@@ -1,0 +1,1 @@
+{"statusCode": 200, "body": "SQS messages processed and stored in DynamoDB successfully!"}

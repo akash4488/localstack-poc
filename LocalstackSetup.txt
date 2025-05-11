@@ -1,0 +1,41 @@
+Getting Started with LocalStack
+Install Docker (if not already installed).
+Install LocalStack:
+pip install localstack
+
+Or use Docker directly:
+docker run -d -p 4566:4566 -p 4571:4571 localstack/localstack
+
+Install AWS CLI and configure it:
+aws configure
+
+Use dummy credentials (LocalStack doesn’t validate them).
+Set AWS Endpoint to LocalStack:
+--endpoint-url=http://localhost:4566
+
+Example PoC: Order Processing Workflow
+We’ll simulate an order processing flow:
+API receives an order and places it into an SQS queue.
+A Lambda function polls the queue and stores the order into DynamoDB.
+Step 1: Create SQS Queue
+aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name order-queue
+
+Step 2: Create DynamoDB Table
+aws --endpoint-url=http://localhost:4566 dynamodb create-table \
+  --table-name Orders \
+  --attribute-definitions AttributeName=orderId,AttributeType=S \
+  --key-schema AttributeName=orderId,KeyType=HASH \
+  --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+
+Step 3: Write and Deploy Lambda Function
+Use localstack-lambda or a Docker-based tool to deploy your Lambda function that:
+Pulls messages from SQS
+Writes to DynamoDB
+Step 4: Trigger the Flow
+aws --endpoint-url=http://localhost:4566 sqs send-message \
+  --queue-url http://localhost:4566/000000000000/order-queue \
+  --message-body '{"orderId": "123", "item": "Book"}'
+
+Step 5: Verify in DynamoDB
+Query the Orders table locally:
+aws --endpoint-url=http://localhost:4566 dynamodb scan --table-name Orders
